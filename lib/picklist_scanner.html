@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#E5322B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>4Kids · Pick &amp; Scan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+  :root {
+    --red:        #E5322B;
+    --red-dark:   #B81F19;
+    --red-soft:   #FFE5E3;
+    --blue:       #0B7FAB;
+    --blue-dark:  #075A7A;
+    --blue-soft:  #E0F2FB;
+    --yellow:     #FFCD2E;
+    --yellow-dark:#E5A800;
+    --yellow-soft:#FFF6D9;
+    --green:      #4CAF50;
+    --green-dark: #2E7D32;
+    --green-soft: #E8F5E9;
+    --cream:      #FFFAF1;
+    --cream-2:    #FFF4E0;
+    --paper:      #FFFFFF;
+    --line:       #F1E4D0;
+    --line-soft:  #FAEBD0;
+    --ink:        #2A1B10;
+    --ink-2:      #5D4836;
+    --ink-mute:   #8C7A6B;
+    --shadow-1: 0 1px 2px rgba(42,27,16,0.06), 0 8px 24px -12px rgba(42,27,16,0.18);
+    --shadow-2: 0 12px 28px -10px rgba(229,50,43,0.32);
+    --safe-top: env(safe-area-inset-top);
+    --safe-bot: env(safe-area-inset-bottom);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 15px;
+    overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none;
+  }
+  body {
+    background:
+      radial-gradient(circle 600px at 100% 0%,  rgba(255,205,46,0.25), transparent 60%),
+      radial-gradient(circle 500px at 0% 100%,  rgba(11,127,171,0.10), transparent 60%),
+      radial-gradient(circle 400px at 100% 50%, rgba(229,50,43,0.06), transparent 60%),
+      var(--cream);
+    background-attachment: fixed;
+  }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
+  .screen { display: none; flex-direction: column; min-height: 100vh; }
+  .screen.active { display: flex; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: calc(14px + var(--safe-top)) 18px 14px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 1px 0 var(--line-soft);
+  }
+  .topbar .logo-mini { height: 32px; width: auto; }
+  .topbar h1 {
+    margin: 0; font-family: 'Fredoka', sans-serif;
+    font-weight: 600; font-size: 18px; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .topbar .badge {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; padding: 5px 10px;
+    background: var(--yellow-soft); color: var(--ink);
+    border-radius: 999px; font-weight: 700;
+    border: 1px solid var(--yellow);
+  }
+  .back-btn {
+    width: 36px; height: 36px; display: grid; place-items: center;
+    background: var(--cream-2); border: 1px solid var(--line);
+    border-radius: 50%; cursor: pointer;
+    color: var(--ink); font-size: 18px; padding: 0;
+    font-family: inherit; font-weight: 700;
+    transition: transform 0.1s;
+  }
+  .back-btn:active { transform: scale(0.92); background: var(--yellow-soft); }
+
+  /* LOGIN */
+  #screen-login {
+    padding: 24px;
+    justify-content: center;
+    padding-top: calc(48px + var(--safe-top));
+    padding-bottom: calc(24px + var(--safe-bot));
+  }
+  .brand-block { text-align: center; margin-bottom: 36px; }
+  .brand-block .logo-img {
+    height: 96px; width: auto; margin-bottom: 10px;
+    filter: drop-shadow(0 8px 20px rgba(229,50,43,0.18));
+  }
+  .brand-block .tagline {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 14px; color: var(--red);
+    letter-spacing: 0.02em; font-style: italic;
+  }
+  .login-card {
+    background: var(--paper); border-radius: 24px;
+    padding: 28px 24px; box-shadow: var(--shadow-1);
+    border: 1px solid var(--line);
+    position: relative; overflow: hidden;
+  }
+  .login-card::before {
+    content: ''; position: absolute;
+    top: -40px; right: -40px; width: 120px; height: 120px;
+    background: radial-gradient(circle, var(--yellow) 0%, transparent 70%);
+    opacity: 0.4; pointer-events: none;
+  }
+  .login-card h2 {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 22px; margin: 0 0 4px; color: var(--ink);
+  }
+  .login-card p.sub { margin: 0 0 24px; color: var(--ink-mute); font-size: 13px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block; font-size: 11px; font-weight: 800;
+    color: var(--ink-2); text-transform: uppercase;
+    letter-spacing: 0.12em; margin-bottom: 6px;
+  }
+  .input {
+    width: 100%; padding: 14px 16px;
+    background: var(--cream-2); border: 2px solid transparent;
+    border-radius: 14px; color: var(--ink);
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    transition: all 0.15s;
+  }
+  .input::placeholder { color: var(--ink-mute); font-weight: 500; }
+  .input:focus { outline: none; border-color: var(--red); background: var(--paper); }
+
+  .btn-primary {
+    width: 100%; padding: 16px;
+    background: var(--red); color: white;
+    border: none; border-radius: 14px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 16px; font-weight: 600;
+    letter-spacing: 0.01em; cursor: pointer;
+    margin-top: 8px; box-shadow: var(--shadow-2);
+    transition: transform 0.1s;
+  }
+  .btn-primary:active { transform: translateY(2px); box-shadow: 0 4px 12px -4px rgba(229,50,43,0.4); }
+  .btn-primary:disabled {
+    background: var(--line); color: var(--ink-mute);
+    box-shadow: none; cursor: not-allowed;
+  }
+  .login-hint {
+    margin-top: 18px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--ink-mute); text-align: center;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  /* INBOX */
+  .scroll-area { flex: 1; overflow-y: auto; padding: 16px 16px calc(16px + var(--safe-bot)); }
+  .meta-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 4px 14px;
+    font-size: 11px; color: var(--ink-mute);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    font-weight: 800;
+  }
+  .pl-card {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 18px; padding: 16px; margin-bottom: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow-1);
+  }
+  .pl-card:active { transform: scale(0.98); }
+  .pl-card::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--red);
+  }
+  .pl-card.partial::before { background: var(--yellow); }
+  .pl-card .docnum {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 12px; color: var(--red); letter-spacing: 0.05em;
+  }
+  .pl-card.partial .docnum { color: var(--yellow-dark); }
+  .pl-card .customer {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 18px; margin: 4px 0 2px; color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .pl-card .ref {
+    font-size: 12px; color: var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace; font-weight: 500;
+  }
+  .pl-card .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .pl-card .stat { display: flex; gap: 16px; font-size: 12px; font-weight: 700; }
+  .pl-card .stat .label { color: var(--ink-mute); font-weight: 600; }
+  .pl-card .stat b { color: var(--ink); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+  .status-pill {
+    font-size: 10px; font-weight: 800;
+    padding: 4px 10px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .status-pill.open { background: var(--blue-soft); color: var(--blue-dark); }
+  .status-pill.partial { background: var(--yellow-soft); color: var(--yellow-dark); }
+  .progress-bar {
+    height: 6px; background: var(--cream-2); border-radius: 3px;
+    overflow: hidden; margin-top: 12px;
+  }
+  .progress-bar .fill {
+    height: 100%; background: linear-gradient(90deg, var(--red), var(--yellow));
+    border-radius: 3px; transition: width 0.3s;
+  }
+
+  /* DETAIL */
+  .detail-header {
+    padding: 18px; background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    position: relative; overflow: hidden;
+  }
+  .detail-header::after {
+    content: ''; position: absolute;
+    top: -60px; right: -60px; width: 160px; height: 160px;
+    background: radial-gradient(circle, var(--red-soft) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .detail-header .docnum {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 12px; color: var(--red); letter-spacing: 0.1em;
+    position: relative; z-index: 1;
+  }
+  .detail-header .customer {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 24px; letter-spacing: -0.02em;
+    margin: 4px 0; color: var(--ink);
+    position: relative; z-index: 1;
+  }
+  .detail-header .meta {
+    display: flex; gap: 18px; margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--ink-mute); font-weight: 600;
+    position: relative; z-index: 1;
+  }
+  .detail-header .meta b { color: var(--ink); }
+
+  .line-card {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 16px; padding: 16px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: var(--shadow-1);
+  }
+  .line-card:active { transform: scale(0.98); }
+  .line-card.complete {
+    background: linear-gradient(135deg, var(--green-soft), var(--paper));
+    border-color: var(--green);
+  }
+  .line-num {
+    width: 36px; height: 36px; flex-shrink: 0;
+    border-radius: 50%; background: var(--cream-2);
+    display: grid; place-items: center;
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 13px; color: var(--ink-2);
+  }
+  .line-card.complete .line-num { background: var(--green); color: white; }
+  .line-info { flex: 1; min-width: 0; }
+  .line-info .code {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-weight: 700; color: var(--red); letter-spacing: 0.05em;
+  }
+  .line-info .name {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 15px; margin: 2px 0; color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .line-info .whs {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--ink-mute); font-weight: 600;
+  }
+  .qty-display { text-align: right; flex-shrink: 0; }
+  .qty-display .picked {
+    font-family: 'Fredoka', sans-serif; font-weight: 700;
+    font-size: 28px; line-height: 1; color: var(--ink);
+  }
+  .qty-display .picked.full { color: var(--green-dark); }
+  .qty-display .picked.partial { color: var(--yellow-dark); }
+  .qty-display .of {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--ink-mute); font-weight: 700;
+    margin-top: 4px; letter-spacing: 0.05em;
+  }
+  .submit-bar {
+    padding: 14px 16px;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    position: sticky; bottom: 0;
+    padding-bottom: calc(14px + var(--safe-bot));
+    box-shadow: 0 -8px 24px -12px rgba(42,27,16,0.1);
+  }
+  .submit-bar.disabled .btn-primary {
+    background: var(--cream-2); color: var(--ink-mute);
+    box-shadow: none; cursor: not-allowed; pointer-events: none;
+  }
+
+  /* SCANNER */
+  #screen-scanner { background: #000; }
+  .scanner-header {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: calc(14px + var(--safe-top)) 18px 14px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85), transparent);
+    z-index: 5; display: flex; align-items: center; gap: 12px;
+  }
+  .scanner-header .back-btn {
+    background: rgba(255,255,255,0.15); color: white;
+    border-color: rgba(255,255,255,0.3);
+  }
+  .scanner-header .info { flex: 1; min-width: 0; color: white; }
+  .scanner-header .code {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--yellow); letter-spacing: 0.1em; font-weight: 700;
+  }
+  .scanner-header .name {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 16px; color: white;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #qr-reader { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #qr-reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
+  #qr-reader > div { border: none !important; }
+
+  .scan-frame {
+    position: absolute; inset: 0; pointer-events: none; z-index: 3;
+    display: grid; place-items: center;
+  }
+  .scan-frame::before {
+    content: ''; width: 75vw; max-width: 320px; aspect-ratio: 1;
+    border-radius: 24px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+  }
+  .scan-corners {
+    position: absolute; width: 75vw; max-width: 320px; aspect-ratio: 1;
+    pointer-events: none; z-index: 4;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+  .scan-corners .corner {
+    position: absolute; width: 32px; height: 32px;
+    border-color: var(--yellow); border-style: solid; border-width: 0;
+  }
+  .scan-corners .tl { top: 0; left: 0; border-top-width: 4px; border-left-width: 4px; border-radius: 12px 0 0 0; }
+  .scan-corners .tr { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; border-radius: 0 12px 0 0; }
+  .scan-corners .bl { bottom: 0; left: 0; border-bottom-width: 4px; border-left-width: 4px; border-radius: 0 0 0 12px; }
+  .scan-corners .br { bottom: 0; right: 0; border-bottom-width: 4px; border-right-width: 4px; border-radius: 0 0 12px 0; }
+
+  .scanner-footer {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 24px 18px calc(24px + var(--safe-bot));
+    background: linear-gradient(0deg, rgba(0,0,0,0.95) 60%, transparent);
+    z-index: 5;
+  }
+  .counter-big { text-align: center; margin-bottom: 14px; color: white; }
+  .counter-big .num {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700; font-size: 64px; line-height: 1;
+  }
+  .counter-big .num .target {
+    color: rgba(255,255,255,0.5); font-size: 36px; font-weight: 600;
+  }
+  .counter-big .label {
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    letter-spacing: 0.2em; text-transform: uppercase;
+    margin-top: 6px; font-weight: 800;
+  }
+  .scanner-status {
+    text-align: center; padding: 12px;
+    border-radius: 12px; margin-bottom: 12px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 14px; font-weight: 600;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .scanner-status.success {
+    background: rgba(76,175,80,0.25); color: white; border-color: var(--green);
+  }
+  .scanner-status.error {
+    background: rgba(229,50,43,0.3); color: white; border-color: var(--red);
+    animation: shake 0.32s;
+  }
+  .scanner-status.warn {
+    background: rgba(255,205,46,0.3); color: white; border-color: var(--yellow);
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-7px); }
+    75% { transform: translateX(7px); }
+  }
+
+  .flash-overlay {
+    position: absolute; inset: 0; pointer-events: none; z-index: 6;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .flash-overlay.success { background: rgba(76,175,80,0.35); }
+  .flash-overlay.error   { background: rgba(229,50,43,0.4); }
+  .flash-overlay.warn    { background: rgba(255,205,46,0.35); }
+  .flash-overlay.show    { opacity: 1; }
+
+  .btn-done {
+    width: 100%; padding: 14px;
+    background: rgba(255,255,255,0.12);
+    color: white; border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 14px;
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 15px; cursor: pointer;
+  }
+
+  /* SUCCESS */
+  #screen-success {
+    padding: 24px; justify-content: center; align-items: center;
+    text-align: center;
+    padding-top: calc(40px + var(--safe-top));
+    padding-bottom: calc(24px + var(--safe-bot));
+  }
+  .success-icon {
+    width: 96px; height: 96px;
+    background: var(--green); border-radius: 50%;
+    display: grid; place-items: center; margin: 0 auto 20px;
+    box-shadow: 0 16px 40px -8px rgba(76,175,80,0.5);
+    animation: pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes pop {
+    0% { transform: scale(0) rotate(-90deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  #screen-success h2 {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 30px; margin: 0 0 8px; letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  #screen-success p { color: var(--ink-mute); margin: 0 0 24px; font-weight: 600; }
+  .receipt {
+    background: var(--paper); border: 1px dashed var(--ink-mute);
+    border-radius: 16px; padding: 20px; width: 100%;
+    max-width: 320px; text-align: left;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    margin-bottom: 24px; box-shadow: var(--shadow-1);
+    position: relative;
+  }
+  .receipt::before, .receipt::after {
+    content: ''; position: absolute;
+    width: 20px; height: 20px; background: var(--cream);
+    border-radius: 50%;
+  }
+  .receipt::before { top: -10px; left: 50%; transform: translateX(-50%); }
+  .receipt::after  { bottom: -10px; left: 50%; transform: translateX(-50%); }
+  .receipt .row {
+    display: flex; justify-content: space-between;
+    padding: 5px 0; color: var(--ink-mute); font-weight: 600;
+  }
+  .receipt .row b { color: var(--ink); font-weight: 700; }
+  .receipt-divider { border: none; border-top: 1px dashed var(--line); margin: 8px 0; }
+
+  /* DETAIL EXTRAS */
+  .detail-actions {
+    display: flex; gap: 10px;
+    padding: 0 16px 12px;
+  }
+  .btn-ghost {
+    flex: 1; padding: 12px;
+    background: var(--blue-soft); color: var(--blue-dark);
+    border: 1px solid var(--blue);
+    border-radius: 12px;
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 13px; cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .btn-ghost:active { transform: scale(0.97); }
+
+  /* QR GEN */
+  .gen-section { padding: 16px; }
+  .gen-card {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 16px; padding: 16px; margin-bottom: 12px;
+    box-shadow: var(--shadow-1);
+  }
+  .gen-card h3 {
+    margin: 0 0 4px;
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 14px; color: var(--red); letter-spacing: 0.02em;
+  }
+  .gen-card .desc { font-size: 12px; color: var(--ink-mute); margin-bottom: 12px; font-weight: 600; }
+  .gen-card .qr-box {
+    background: white; padding: 12px; border-radius: 12px;
+    display: grid; place-items: center; border: 1px solid var(--line);
+  }
+  .gen-card .qr-box img { width: 100%; max-width: 200px; image-rendering: pixelated; }
+  .gen-card .payload {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--ink-2); margin-top: 8px;
+    word-break: break-all; padding: 8px;
+    background: var(--cream-2); border-radius: 8px; font-weight: 600;
+  }
+  .fab-toggle {
+    position: fixed; bottom: calc(16px + var(--safe-bot)); right: 16px;
+    width: 56px; height: 56px;
+    background: var(--blue); color: white;
+    border: 3px solid white;
+    border-radius: 50%; display: grid; place-items: center;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    z-index: 50;
+    box-shadow: 0 8px 24px -6px rgba(11,127,171,0.5);
+  }
+  .fab-toggle:active { transform: scale(0.92); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; top: calc(16px + var(--safe-top));
+    left: 50%; transform: translateX(-50%) translateY(-100px);
+    padding: 14px 20px; border-radius: 14px;
+    font-family: 'Fredoka', sans-serif; font-size: 13px;
+    font-weight: 600;
+    z-index: 100; transition: transform 0.25s ease;
+    background: var(--paper); border: 1px solid var(--line);
+    box-shadow: 0 12px 32px -10px rgba(42,27,16,0.25);
+    max-width: 90vw; text-align: center; color: var(--ink);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { color: var(--green-dark); border-color: var(--green); }
+  .toast.error   { color: var(--red); border-color: var(--red); }
+  .toast.warn    { color: var(--yellow-dark); border-color: var(--yellow); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LOGIN -->
+  <div id="screen-login" class="screen active">
+    <div class="brand-block">
+      <img class="logo-img" src="https://i0.wp.com/vcnutrifoods.com/wp-content/uploads/2023/02/logo1.png?fit=300%2C130&ssl=1" alt="4Kids" />
+      <div class="tagline">The Real Taste of Joy</div>
+    </div>
+    <div class="login-card">
+      <h2>Pick &amp; Scan</h2>
+      <p class="sub">Sign in to fetch your warehouse pick lists</p>
+      <div class="form-group">
+        <label>User ID</label>
+        <input class="input" id="login-user" placeholder="picker01" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input class="input" type="password" id="login-pass" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="login-hint">Demo · Any credentials work</div>
+    </div>
+  </div>
+
+  <!-- INBOX -->
+  <div id="screen-inbox" class="screen">
+    <div class="topbar">
+      <img class="logo-mini" src="https://i0.wp.com/vcnutrifoods.com/wp-content/uploads/2023/02/logo1.png?fit=150%2C65&ssl=1" alt="4Kids" />
+      <h1>Pick Lists</h1>
+      <span class="badge mono" id="user-badge">PICKER01</span>
+    </div>
+    <div class="scroll-area">
+      <div class="meta-row">
+        <span>Open Assignments</span>
+        <span id="pl-count">0 lists</span>
+      </div>
+      <div id="pl-list"></div>
+    </div>
+  </div>
+
+  <!-- DETAIL -->
+  <div id="screen-detail" class="screen">
+    <div class="topbar">
+      <button class="back-btn" onclick="goInbox()">‹</button>
+      <h1>Pick List</h1>
+      <span class="badge mono" id="detail-progress">0/0</span>
+    </div>
+    <div class="detail-header">
+      <div class="docnum" id="detail-docnum">PL-0000</div>
+      <div class="customer" id="detail-customer">Customer</div>
+      <div class="meta">
+        <span>REF <b id="detail-ref">—</b></span>
+        <span>WHS <b id="detail-whs">—</b></span>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-ghost" onclick="goPickListQRGen()">Test QR Codes for this Pick List</button>
+    </div>
+    <div class="scroll-area" id="detail-lines"></div>
+    <div class="submit-bar disabled" id="submit-bar">
+      <button class="btn-primary" onclick="postPickList()" id="post-btn">Post to SAP</button>
+    </div>
+  </div>
+
+  <!-- SCANNER -->
+  <div id="screen-scanner" class="screen">
+    <div class="scanner-header">
+      <button class="back-btn" onclick="closeScanner()">×</button>
+      <div class="info">
+        <div class="code" id="scan-itemcode">—</div>
+        <div class="name" id="scan-itemname">—</div>
+      </div>
+    </div>
+    <div id="qr-reader"></div>
+    <div class="scan-frame"></div>
+    <div class="scan-corners">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+    </div>
+    <div class="flash-overlay" id="flash"></div>
+    <div class="scanner-footer">
+      <div class="counter-big">
+        <div class="num"><span id="scan-picked">0</span><span class="target"> / <span id="scan-target">0</span></span></div>
+        <div class="label">Units Picked</div>
+      </div>
+      <div class="scanner-status" id="scan-status">Align QR within frame</div>
+      <button class="btn-done" onclick="closeScanner()">Done</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div id="screen-success" class="screen">
+    <div class="success-icon">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg>
+    </div>
+    <h2>Posted to SAP!</h2>
+    <p id="success-msg">Pick list successfully updated</p>
+    <div class="receipt" id="success-receipt"></div>
+    <div style="width:100%; max-width:320px;">
+      <button class="btn-primary" onclick="goInbox()">Back to Inbox</button>
+    </div>
+  </div>
+
+  <!-- QR GEN -->
+  <div id="screen-qrgen" class="screen">
+    <div class="topbar">
+      <button class="back-btn" onclick="goInbox()">‹</button>
+      <h1>Test QR Codes</h1>
+    </div>
+    <div class="scroll-area gen-section" id="qr-gen-area"></div>
+  </div>
+
+  <div class="fab-toggle" id="fab-qrgen" onclick="goQRGen()" style="display:none;">QR</div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const state = {
+  user: null,
+  pickLists: [],
+  currentPL: null,
+  currentLineIdx: null,
+  scannedQRs: new Set(),
+  lastScanTs: 0,
+  scanner: null,
+};
+
+function makePickLists() {
+  return [
+    {
+      absEntry: 1001, docNum: 'PL-1001',
+      customer: 'Sri Lakshmi Distributors',
+      ref: 'SO-44213', whs: 'WH-MALLAVALLI', status: 'open',
+      lines: [
+        { lineNum: 0, itemCode: 'JE-MIX-100G',   itemName: 'Mixed Fruit Jelly 100g',     whs: 'A-12-3', relQty: 6, pickedQty: 0, manageBatch: true },
+        { lineNum: 1, itemCode: 'WS-ZOOP-50G',   itemName: 'Zoop Choco Wafer Sticks 50g', whs: 'A-14-1', relQty: 4, pickedQty: 0, manageBatch: true },
+        { lineNum: 2, itemCode: 'LP-MANGO-12P',  itemName: 'Mango Lollipops 12-pack',     whs: 'B-04-1', relQty: 3, pickedQty: 0, manageBatch: false },
+      ],
+    },
+    {
+      absEntry: 1002, docNum: 'PL-1002',
+      customer: 'Gulf Foods Trading LLC',
+      ref: 'EXP-2026-018', whs: 'WH-EXPORT', status: 'partial',
+      lines: [
+        { lineNum: 0, itemCode: 'LC-CHOC-200G',  itemName: 'Chocolate Layer Cake 200g',   whs: 'C-02-1', relQty: 5, pickedQty: 2, manageBatch: true },
+        { lineNum: 1, itemCode: 'CH-MOULD-50G',  itemName: 'Moulded Chocolate Bar 50g',   whs: 'C-02-2', relQty: 4, pickedQty: 0, manageBatch: true },
+        { lineNum: 2, itemCode: 'CD-MANGO-100G', itemName: 'Mango Tango Candy 100g',      whs: 'C-03-1', relQty: 6, pickedQty: 0, manageBatch: false },
+      ],
+    },
+    {
+      absEntry: 1003, docNum: 'PL-1003',
+      customer: 'Ravi Sweets &amp; Snacks',
+      ref: 'SO-44225', whs: 'WH-MALLAVALLI', status: 'open',
+      lines: [
+        { lineNum: 0, itemCode: 'JE-RAINBOW-80G', itemName: 'Rainbow Hearts Jelly 80g',   whs: 'D-01-A', relQty: 5, pickedQty: 0, manageBatch: true },
+        { lineNum: 1, itemCode: 'DR-MANGO-200ML', itemName: 'Mango Drink 200ml',          whs: 'E-01-2', relQty: 4, pickedQty: 0, manageBatch: false },
+      ],
+    },
+    {
+      absEntry: 1004, docNum: 'PL-1004',
+      customer: 'Bharat Confectionery',
+      ref: 'SO-44231', whs: 'WH-MALLAVALLI', status: 'open',
+      lines: [
+        { lineNum: 0, itemCode: 'WS-DARK-50G', itemName: 'Dark Wafer Sticks 50g',      whs: 'A-14-2', relQty: 3, pickedQty: 0, manageBatch: true },
+        { lineNum: 1, itemCode: 'JE-FLY-60G',  itemName: 'Jelly Fly Soft Candy 60g',   whs: 'A-12-5', relQty: 4, pickedQty: 0, manageBatch: true },
+      ],
+    },
+  ];
+}
+
+const API = {
+  async login(user, pass) { await sleep(400); return { ok: true, user: { id: user || 'picker01', name: (user || 'picker01').toUpperCase() } }; },
+  async getPickLists(userId) { await sleep(300); return makePickLists(); },
+  async getPickList(absEntry) { await sleep(200); return state.pickLists.find(p => p.absEntry === absEntry); },
+  async validateQR(absEntry, lineNum, qrRaw) {
+    await sleep(80);
+    const parsed = parseQR(qrRaw);
+    if (!parsed) return { ok: false, reason: 'INVALID_FORMAT', message: 'Unrecognised QR format' };
+    return { ok: true, parsed };
+  },
+  async commitPickList(absEntry, scans) { await sleep(900); return { ok: true, absEntry, postedAt: new Date().toISOString() }; },
+};
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function parseQR(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const s = raw.trim();
+  if (s.includes('|')) {
+    const parts = s.split('|');
+    const out = {};
+    for (let i = 0; i < parts.length - 1; i += 2) {
+      out[parts[i].trim().toUpperCase()] = parts[i + 1].trim();
+    }
+    if (!out.ITM) return null;
+    return { itemCode: out.ITM, batch: out.BCH || null, serial: out.SR || null, mfg: out.MFG || null, exp: out.EXP || null, raw: s };
+  }
+  try {
+    const obj = JSON.parse(s);
+    if (!obj.item) return null;
+    return { itemCode: obj.item, batch: obj.batch || null, serial: obj.serial || null, mfg: obj.mfg || null, exp: obj.exp || null, raw: s };
+  } catch (e) { return null; }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goInbox() {
+  if (state.scanner) closeScanner();
+  state.currentPL = null; state.currentLineIdx = null;
+  state.scannedQRs.clear();
+  renderInbox();
+  showScreen('screen-inbox');
+}
+function goDetail(absEntry) {
+  state.currentPL = state.pickLists.find(p => p.absEntry === absEntry);
+  state.scannedQRs.clear();
+  renderDetail();
+  showScreen('screen-detail');
+}
+function goQRGen() { renderQRGen(); showScreen('screen-qrgen'); }
+
+async function doLogin() {
+  const u = document.getElementById('login-user').value || 'picker01';
+  const p = document.getElementById('login-pass').value || 'demo';
+  const res = await API.login(u, p);
+  if (!res.ok) return toast('Login failed', 'error');
+  state.user = res.user;
+  document.getElementById('user-badge').textContent = state.user.name;
+  state.pickLists = await API.getPickLists(state.user.id);
+  renderInbox();
+  showScreen('screen-inbox');
+  document.getElementById('fab-qrgen').style.display = 'grid';
+}
+
+function renderInbox() {
+  const list = document.getElementById('pl-list');
+  list.innerHTML = '';
+  document.getElementById('pl-count').textContent =
+    `${state.pickLists.length} list${state.pickLists.length === 1 ? '' : 's'}`;
+  state.pickLists.forEach(pl => {
+    const totalRel = pl.lines.reduce((s, l) => s + l.relQty, 0);
+    const totalPicked = pl.lines.reduce((s, l) => s + l.pickedQty, 0);
+    const pct = totalRel ? Math.round((totalPicked / totalRel) * 100) : 0;
+    const card = document.createElement('div');
+    card.className = 'pl-card ' + (pl.status === 'partial' ? 'partial' : '');
+    card.onclick = () => goDetail(pl.absEntry);
+    card.innerHTML = `
+      <div class="docnum">${pl.docNum}</div>
+      <div class="customer">${pl.customer}</div>
+      <div class="ref">REF ${pl.ref} · ${pl.whs}</div>
+      <div class="footer">
+        <div class="stat">
+          <span><span class="label">LINES</span> <b>${pl.lines.length}</b></span>
+          <span><span class="label">QTY</span> <b>${totalPicked}/${totalRel}</b></span>
+        </div>
+        <span class="status-pill ${pl.status}">${pl.status}</span>
+      </div>
+      <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function renderDetail() {
+  const pl = state.currentPL;
+  if (!pl) return;
+  document.getElementById('detail-docnum').textContent = pl.docNum;
+  document.getElementById('detail-customer').innerHTML = pl.customer;
+  document.getElementById('detail-ref').textContent = pl.ref;
+  document.getElementById('detail-whs').textContent = pl.whs;
+  const totalRel = pl.lines.reduce((s, l) => s + l.relQty, 0);
+  const totalPicked = pl.lines.reduce((s, l) => s + l.pickedQty, 0);
+  document.getElementById('detail-progress').textContent = `${totalPicked}/${totalRel}`;
+  const linesEl = document.getElementById('detail-lines');
+  linesEl.innerHTML = '';
+  pl.lines.forEach((line, idx) => {
+    const complete = line.pickedQty >= line.relQty;
+    const partial = line.pickedQty > 0 && !complete;
+    const card = document.createElement('div');
+    card.className = 'line-card' + (complete ? ' complete' : '');
+    card.onclick = () => openScanner(idx);
+    card.innerHTML = `
+      <div class="line-num">${idx + 1}</div>
+      <div class="line-info">
+        <div class="code">${line.itemCode}</div>
+        <div class="name">${line.itemName}</div>
+        <div class="whs">BIN ${line.whs}${line.manageBatch ? ' · BATCH' : ''}</div>
+      </div>
+      <div class="qty-display">
+        <div class="picked ${complete ? 'full' : (partial ? 'partial' : '')}">${line.pickedQty}</div>
+        <div class="of">OF ${line.relQty}</div>
+      </div>
+    `;
+    linesEl.appendChild(card);
+  });
+  const allDone = pl.lines.every(l => l.pickedQty >= l.relQty);
+  document.getElementById('submit-bar').classList.toggle('disabled', !allDone);
+  document.getElementById('post-btn').textContent = allDone ? 'Post to SAP' : 'Complete all lines to post';
+}
+
+async function openScanner(lineIdx) {
+  state.currentLineIdx = lineIdx;
+  const line = state.currentPL.lines[lineIdx];
+  if (line.pickedQty >= line.relQty) { toast('Line already complete', 'warn'); return; }
+  document.getElementById('scan-itemcode').textContent = line.itemCode;
+  document.getElementById('scan-itemname').textContent = line.itemName;
+  updateScanCounter();
+  setScanStatus('Align QR within frame', '');
+  showScreen('screen-scanner');
+  const reader = new Html5Qrcode('qr-reader', { verbose: false });
+  state.scanner = reader;
+  try {
+    await reader.start(
+      { facingMode: 'environment' },
+      { fps: 12, qrbox: undefined, aspectRatio: window.innerWidth / window.innerHeight, disableFlip: false },
+      onScanSuccess,
+      () => {}
+    );
+  } catch (err) {
+    console.error('Camera start failed', err);
+    setScanStatus('Camera unavailable — check permissions', 'error');
+    toast('Camera permission denied', 'error');
+  }
+}
+
+async function closeScanner() {
+  if (state.scanner) {
+    try { await state.scanner.stop(); state.scanner.clear(); } catch (e) {}
+    state.scanner = null;
+  }
+  if (state.currentPL) { renderDetail(); showScreen('screen-detail'); }
+  else { showScreen('screen-inbox'); }
+}
+
+async function onScanSuccess(decodedText) {
+  const now = Date.now();
+  if (now - state.lastScanTs < 800) return;
+  state.lastScanTs = now;
+  const line = state.currentPL.lines[state.currentLineIdx];
+
+  if (state.scannedQRs.has(decodedText)) {
+    flash('warn'); setScanStatus('Duplicate QR — already scanned', 'warn');
+    haptic([60, 40, 60]); beep('warn'); return;
+  }
+  const res = await API.validateQR(state.currentPL.absEntry, line.lineNum, decodedText);
+  if (!res.ok) {
+    flash('error'); setScanStatus(res.message || 'Invalid QR', 'error');
+    haptic([100, 60, 100]); beep('error'); return;
+  }
+  const parsed = res.parsed;
+  if (parsed.itemCode !== line.itemCode) {
+    const suggestIdx = state.currentPL.lines.findIndex(l => l.itemCode === parsed.itemCode && l.pickedQty < l.relQty);
+    flash('error');
+    const msg = suggestIdx >= 0 ? `Wrong line — try line #${suggestIdx + 1}` : `Item ${parsed.itemCode} not in this list`;
+    setScanStatus(msg, 'error'); haptic([100, 60, 100]); beep('error'); return;
+  }
+  if (line.pickedQty >= line.relQty) {
+    flash('warn'); setScanStatus('Line fully picked', 'warn');
+    haptic([60]); beep('warn'); return;
+  }
+  if (line.manageBatch && !parsed.batch) {
+    flash('error'); setScanStatus('Batch required for this item', 'error');
+    haptic([100, 60, 100]); beep('error'); return;
+  }
+  line.pickedQty += 1;
+  state.scannedQRs.add(decodedText);
+  if (!line.scans) line.scans = [];
+  line.scans.push(parsed);
+  flash('success'); haptic([40]); beep('success');
+  updateScanCounter();
+  const remaining = line.relQty - line.pickedQty;
+  if (remaining === 0) {
+    setScanStatus('Line complete ✓', 'success');
+    setTimeout(() => closeScanner(), 800);
+  } else {
+    setScanStatus(`Picked +1 · ${remaining} remaining`, 'success');
+  }
+}
+
+function updateScanCounter() {
+  const line = state.currentPL.lines[state.currentLineIdx];
+  document.getElementById('scan-picked').textContent = line.pickedQty;
+  document.getElementById('scan-target').textContent = line.relQty;
+}
+function setScanStatus(text, kind) {
+  const el = document.getElementById('scan-status');
+  el.textContent = text;
+  el.className = 'scanner-status ' + (kind || '');
+}
+function flash(kind) {
+  const el = document.getElementById('flash');
+  el.className = 'flash-overlay ' + kind + ' show';
+  setTimeout(() => { el.className = 'flash-overlay ' + kind; }, 180);
+}
+function haptic(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+
+let audioCtx;
+function beep(kind) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    let freq = 880, dur = 0.08;
+    if (kind === 'success') { freq = 1320; dur = 0.06; }
+    if (kind === 'error')   { freq = 220;  dur = 0.18; }
+    if (kind === 'warn')    { freq = 440;  dur = 0.12; }
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+
+async function postPickList() {
+  const pl = state.currentPL;
+  if (!pl.lines.every(l => l.pickedQty >= l.relQty)) return;
+  const btn = document.getElementById('post-btn');
+  btn.textContent = 'Posting…';
+  btn.disabled = true;
+  const allScans = pl.lines.flatMap(l => (l.scans || []).map(s => ({ lineNum: l.lineNum, ...s })));
+  const res = await API.commitPickList(pl.absEntry, allScans);
+  btn.disabled = false;
+  if (!res.ok) { toast('Post failed — try again', 'error'); return; }
+  const totalQty = pl.lines.reduce((s, l) => s + l.pickedQty, 0);
+  document.getElementById('success-msg').innerHTML = `${pl.docNum} · ${pl.customer}`;
+  document.getElementById('success-receipt').innerHTML = `
+    <div class="row"><span>DOC</span><b>${pl.docNum}</b></div>
+    <div class="row"><span>ABS ENTRY</span><b>${pl.absEntry}</b></div>
+    <div class="row"><span>LINES</span><b>${pl.lines.length}</b></div>
+    <div class="row"><span>UNITS</span><b>${totalQty}</b></div>
+    <hr class="receipt-divider"/>
+    <div class="row"><span>POSTED AT</span><b>${new Date(res.postedAt).toLocaleTimeString()}</b></div>
+    <div class="row"><span>USER</span><b>${state.user.name}</b></div>
+  `;
+  state.pickLists = state.pickLists.filter(p => p.absEntry !== pl.absEntry);
+  showScreen('screen-success');
+}
+
+function renderQRGen() {
+  const area = document.getElementById('qr-gen-area');
+  area.innerHTML = '<div class="meta-row"><span>Test QR Codes</span><span>Print or display</span></div>';
+  state.pickLists.forEach(pl => {
+    pl.lines.forEach((line, lineIdx) => {
+      const remaining = line.relQty - line.pickedQty;
+      for (let i = 1; i <= remaining; i++) {
+        const payload = line.manageBatch
+          ? `ITM|${line.itemCode}|BCH|B26-${pl.absEntry}-${lineIdx}|SR|U${String(i).padStart(3,'0')}`
+          : `ITM|${line.itemCode}|SR|U${pl.absEntry}-${lineIdx}-${String(i).padStart(3,'0')}`;
+        const card = document.createElement('div');
+        card.className = 'gen-card';
+        card.innerHTML = `
+          <h3>${pl.docNum} · L${lineIdx + 1} · UNIT ${i}/${remaining}</h3>
+          <div class="desc">${line.itemCode} — ${line.itemName}</div>
+          <div class="qr-box"><img src="${makeQRDataURL(payload)}" alt="qr"/></div>
+          <div class="payload">${payload}</div>
+        `;
+        area.appendChild(card);
+      }
+    });
+  });
+  const invalid = document.createElement('div');
+  invalid.className = 'gen-card';
+  invalid.innerHTML = `
+    <h3 style="color:#E5322B">⚠ INVALID FORMAT (test)</h3>
+    <div class="desc">Should be rejected</div>
+    <div class="qr-box"><img src="${makeQRDataURL('hello world')}" alt="qr"/></div>
+    <div class="payload">hello world</div>
+  `;
+  area.appendChild(invalid);
+  const wrong = document.createElement('div');
+  wrong.className = 'gen-card';
+  wrong.innerHTML = `
+    <h3 style="color:#E5322B">⚠ UNKNOWN ITEM (test)</h3>
+    <div class="desc">Item not in any pick list</div>
+    <div class="qr-box"><img src="${makeQRDataURL('ITM|ZZ-NOTREAL|SR|U001')}" alt="qr"/></div>
+    <div class="payload">ITM|ZZ-NOTREAL|SR|U001</div>
+  `;
+  area.appendChild(wrong);
+}
+
+function makeQRDataURL(text) {
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  return qr.createDataURL(4, 0);
+}
+
+let toastTimer;
+function toast(msg, kind = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast ' + kind; }, 2400);
+}
+</script>
+</body>
+</html>
